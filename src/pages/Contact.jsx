@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Contact() {
   const [comment, setComment] = useState("");
   const [reviews, setReviews] = useState([]);
+  const [submitted, setSubmitted] = useState(false);
 
   // Load reviews from LocalStorage
   useEffect(() => {
@@ -17,112 +19,175 @@ export default function Contact() {
 
     const newReview = {
       id: Date.now(),
-      comment,
+      comment: comment.trim(),
     };
 
-    const updated = [newReview, ...reviews];
-    setReviews(updated);
+    if (!newReview.comment) return;
 
-    localStorage.setItem("reviews", JSON.stringify(updated));
+    // Update state and localStorage
+    setReviews((prev) => {
+      const updated = [newReview, ...prev];
+      localStorage.setItem("reviews", JSON.stringify(updated));
+      return updated;
+    });
+
     setComment("");
+    setSubmitted(true);
+    setTimeout(() => setSubmitted(false), 2000);
   };
 
   return (
-    <section className="flex justify-center py-16 px-4">
-      <div className="w-full max-w-5xl bg-zinc-900/70 backdrop-blur border border-zinc-800 rounded-3xl shadow-xl p-10">
+    <section className="relative flex justify-center px-4 py-24 bg-zinc-950 min-h-screen">
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative w-full max-w-6xl bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl shadow-2xl p-8 sm:p-12"
+      >
+ 
+        <div className="absolute -inset-0.5 bg-indigo-500/10 blur-2xl rounded-3xl -z-10" />
+
         {/* Title */}
-        <h2 className="text-3xl font-bold text-center text-white mb-12">
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="text-3xl sm:text-4xl font-bold text-center text-white mb-14"
+        >
           Contact & Reviews
-        </h2>
+        </motion.h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-
-          <div>
+          {/* Reviews Section */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.25 }}
+          >
             <h3 className="text-xl font-semibold text-white mb-6">
-              Reviews / Comments
+              Leave a Comment
             </h3>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-              <textarea
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl p-4 h-28 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+              <motion.textarea
+                whileFocus={{ scale: 1.01 }}
+                className="w-full bg-zinc-800/80 border border-zinc-700 rounded-2xl p-4 h-32
+                           text-white placeholder-zinc-500 focus:outline-none
+                           focus:ring-2 focus:ring-indigo-600 transition"
                 placeholder="Write your comment..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 required
               />
 
-              <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white
+                           font-semibold py-3 rounded-2xl shadow-md transition"
+              >
                 Submit
-              </button>
+              </motion.button>
+
+              {/* Success feedback */}
+              <AnimatePresence>
+                {submitted && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-sm text-emerald-400 text-center"
+                  >
+                    Comment submitted successfully!
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </form>
 
             {/* Review List */}
-            <div className="mt-8 space-y-3">
-              {reviews.length === 0 && (
-                <p className="text-zinc-400 text-sm text-center">
-                  No comments yet. Be the first!
-                </p>
-              )}
-
-              {reviews.map((r) => (
-                <Link
-                  key={r.id}
-                  to={`/reviews/${r.id}`}
-                  className="flex items-start gap-3 bg-zinc-800 border border-zinc-700 rounded-2xl p-4 hover:bg-zinc-700 transition-all duration-200 shadow-sm hover:shadow-md"
-                >
-                  {/* Person Icon */}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-indigo-500 flex-shrink-0 mt-1"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
+            <motion.div className="mt-10 space-y-3">
+              <AnimatePresence>
+                {reviews.length === 0 && (
+                  <motion.p
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-zinc-400 text-sm text-center"
                   >
-                    <path
-                      d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"
-                    />
-                  </svg>
+                    No comments yet. Be the first!
+                  </motion.p>
+                )}
 
-                  <p className="text-sm text-zinc-300 break-words">{r.comment}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
+                {reviews.map((r) => (
+                  <motion.div
+                    key={r.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Link
+                      to={`/reviews/${r.id}`}
+                      className="flex items-start gap-3 bg-zinc-800/80 border border-zinc-700
+                                 rounded-2xl p-4 hover:bg-zinc-700/70 transition shadow-sm"
+                    >
+                      {/* Icon */}
+                      <div className="text-indigo-500 mt-1">👤</div>
+                      <p className="text-sm text-zinc-300 break-words">
+                        {r.comment}
+                      </p>
+                    </Link>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
 
           {/* Contact Info */}
-          <div>
-            <h3 className="text-xl font-semibold text-white mb-6">My Details</h3>
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <h3 className="text-xl font-semibold text-white mb-6">
+              My Details
+            </h3>
 
-            <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-6 space-y-4 text-zinc-300 shadow-sm">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="bg-zinc-800/80 border border-zinc-700 rounded-2xl
+                         p-6 space-y-4 text-zinc-300 shadow-md"
+            >
               <p>
-                <span className="font-bold text-white">📞 Phone:</span> +63 991
-                393 8315
+                <span className="font-semibold text-white">📞 Phone:</span>{" "}
+                +63 991 393 8315
               </p>
 
               <p>
-                <span className="font-bold text-white">✉ Email:</span>{" "}
+                <span className="font-semibold text-white">✉ Email:</span>{" "}
                 jaspervaldez6@gmail.com
               </p>
 
               <p>
-                <span className="font-bold text-white">🌐 GitHub:</span>{" "}
+                <span className="font-semibold text-white">🌐 GitHub:</span>{" "}
                 <a
                   href="https://github.com/JasperValdez"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-indigo-500 hover:text-indigo-400 underline transition-colors duration-200"
+                  className="text-indigo-400 hover:text-indigo-300 underline transition"
                 >
                   github.com/JasperValdez
                 </a>
               </p>
-            </div>
+            </motion.div>
 
             <p className="text-sm text-zinc-400 mt-4">
-              Feel free to message me anytime!
+              Feel free to reach out anytime — I’d love to connect!
             </p>
-          </div>    
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
